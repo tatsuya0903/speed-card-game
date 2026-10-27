@@ -1,6 +1,8 @@
 # WebRTC スピード通信対戦アプリ — 既存プロジェクト参照アーキテクチャ v1.0
 
-作成日: 2026-10-25
+作成日: 2026-10-25 / 更新日: 2026-10-27
+
+> 最新決定: フロントエンドはGitHub Pages。フェーズ0.5以降はLINE／コピー＆ペーストによる手動Offer / Answer交換を正式版まで継続する。Cloudflare・独自バックエンド・DBは構築しない。通信・RTT・演出・デプロイはフェーズ0に含めない。
 
 ## 目的と位置づけ
 
@@ -8,18 +10,19 @@
 
 ## 現行リポジトリから継承するもの
 
-| 参照先 | 確認した実装 | 新アプリへの継承 |
-|---|---|---|
-| brain-training `src/stores/training.ts` | `Clock = () => number` と `performance.now()` の注入可能な時刻取得 | 反応時間・操作時刻のテスト用FakeClock |
-| brain-training `src/views/TrainingView.vue` | `watch(...,{flush:'post'})`、`requestAnimationFrame`、効果音/触覚フィードバック呼出し | 表示タイミング計測の近似、アニメーション・フィードバック、後始末。ただし実画面表示時刻を保証するものではない |
-| brain-training `src/domain/training/sounds.ts` / `haptics.ts` | Web Audio API と任意の触覚フィードバック | サウンド／触覚を失敗してもゲーム進行を止めない補助機能に |
-| daily-heatmap `src/domain/`, `src/stores/` | UI非依存のドメイン処理と Pinia 分離 | ゲームルールは副作用のない純粋関数に、Piniaは表示向け状態を担当 |
-| daily-heatmap `src/composables/useHeatmapInteraction.ts` | DOM入力処理の分離・キーボード操作 | `useCardInput` と `useCardAnimation` に入力/演出を分離 |
-| daily-heatmap `src/router/index.ts` | Hash Router と `createAppRouter` ファクトリ | GitHub Pagesへの設置、ルートをテストしやすくする |
-| daily-heatmap `playwright.config.ts` | chromium / firefox / webkit / mobile-chrome / mobile-safari | マルチブラウザUI検証。モバイル系はエミュレーションであり実機検証とは区別 |
-| daily-heatmap `.github/workflows/ci.yml`, `deploy.yml` | 非破壊のLint、テスト、ビルド、明示操作の公開 | PRのCIと本番公開を分離、公開には明示承認。複雑なタグ検証は必要に応じて段階導入 |
+| 参照先                                                        | 確認した実装                                                                          | 新アプリへの継承                                                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| brain-training `src/stores/training.ts`                       | `Clock = () => number` と `performance.now()` の注入可能な時刻取得                    | 反応時間・操作時刻のテスト用FakeClock                                                                        |
+| brain-training `src/views/TrainingView.vue`                   | `watch(...,{flush:'post'})`、`requestAnimationFrame`、効果音/触覚フィードバック呼出し | 表示タイミング計測の近似、アニメーション・フィードバック、後始末。ただし実画面表示時刻を保証するものではない |
+| brain-training `src/domain/training/sounds.ts` / `haptics.ts` | Web Audio API と任意の触覚フィードバック                                              | サウンド／触覚を失敗してもゲーム進行を止めない補助機能に                                                     |
+| daily-heatmap `src/domain/`, `src/stores/`                    | UI非依存のドメイン処理と Pinia 分離                                                   | ゲームルールは副作用のない純粋関数に、Piniaは表示向け状態を担当                                              |
+| daily-heatmap `src/composables/useHeatmapInteraction.ts`      | DOM入力処理の分離・キーボード操作                                                     | `useCardInput` と `useCardAnimation` に入力/演出を分離                                                       |
+| daily-heatmap `src/router/index.ts`                           | Hash Router と `createAppRouter` ファクトリ                                           | GitHub Pagesへの設置、ルートをテストしやすくする                                                             |
+| daily-heatmap `playwright.config.ts`                          | chromium / firefox / webkit / mobile-chrome / mobile-safari                           | マルチブラウザUI検証。モバイル系はエミュレーションであり実機検証とは区別                                     |
+| daily-heatmap `.github/workflows/ci.yml`, `deploy.yml`        | 非破壊のLint、テスト、ビルド、明示操作の公開                                          | PRのCIと本番公開を分離、公開には明示承認。複雑なタグ検証は必要に応じて段階導入                               |
 
 参照リンク:
+
 - https://github.com/tatsuya0903/brain-training
 - https://github.com/tatsuya0903/daily-heatmap
 - https://github.com/tatsuya0903/brain-training/blob/main/src/stores/training.ts
@@ -30,11 +33,12 @@
 ## 技術基盤
 
 - Vue 3 + TypeScript（strict）+ Vite 8 系、Vuetify 4 + Vue Router（Hash History）+ Pinia 4
-- npm + package-lock.json、Node 24.21.0（既存 `daily-heatmap` と揃え、Volta固定）
+- npm 11.19.0 + package-lock.json、Node 24.21.0（既存 `daily-heatmap` と揃え、両方Volta固定）
+- VueUseはUI補助に限定。フェーズ0はuseTitle、今後useClipboard / useDocumentVisibilityを検討。domainと通信プロトコルの純粋ロジックには依存させない。
 - Vitest + Vue Test Utils + Playwright / ESLint + Oxlint + Prettier
 - フロントエンドの静的配信: GitHub Pages。`base` は新リポジトリの名前に合わせて設定。
-- ルーム／シグナリング: 別途 Cloudflare Workers + Durable Objects を候補。**GitHub Pagesのみでは仲介処理は動かない**。
-- WebRTC `RTCDataChannel` (初期版は ordered/reliable)、STUN/TURN (TURNは短期資格情報を適切に配布)
+- シグナリング: Offer / AnswerをLINE／コピー＆ペーストで手動交換。自前の仲介サーバーは設けない。
+- WebRTCはブラウザー標準の `RTCDataChannel`（初期版は ordered/reliable）。STUN/TURNの必要性・利用方針はフェーズ0.5で検証し、独自バックエンドを前提としない。
 - 初期版は認証・ランキング・ゲーム録画・PWAをスコープ外とする。PWA導入時は対戦中の自動更新を防止する。
 
 ## 推奨ディレクトリ構造
@@ -43,7 +47,7 @@
 .
 ├── .github/workflows/
 │   ├── ci.yml
-│   └── deploy.yml
+│   └── deploy.yml               # フェーズ0.5で追加
 ├── e2e/
 │   ├── local-game.spec.ts
 │   ├── room-connection.spec.ts
@@ -78,7 +82,7 @@
 │   │   ├── protocol.ts           # バージョン付きメッセージとランタイム検証
 │   │   ├── transport.ts          # MessageTransport インターフェース
 │   │   ├── rtcTransport.ts       # RTCPeerConnection, RTCDataChannel
-│   │   ├── signalingClient.ts
+│   │   ├── manualSignaling.ts     # Offer / Answerの手動交換補助
 │   │   ├── clockSync.ts          # performance.now() の端末差推定
 │   │   └── *.spec.ts
 │   ├── stores/
@@ -92,10 +96,6 @@
 │   │   └── ResultView.vue
 │   ├── router/index.ts
 │   └── main.ts
-├── signaling/                   # Worker + Durable Object、フロントと独立配備
-│   ├── src/
-│   ├── wrangler.jsonc
-│   └── tests/
 ├── package.json
 ├── package-lock.json
 ├── SPEC.md
@@ -103,7 +103,7 @@
 └── README.md
 ```
 
-初期段階では `application/` を過剰に分割しない。通信・競合制御が必要になった時点で専用モジュールを追加する。`domain` は Vue、Pinia、DOM、RTC、時間取得に依存しない。
+上記は将来の配置案であり、フェーズ0では未使用ディレクトリ・ダミー実装を作成しない。現在の実ファイル構成はREADMEを参照。初期段階では `application/` を過剰に分割しない。通信・競合制御が必要になった時点で専用モジュールを追加する。`domain` は Vue、VueUse、Pinia、DOM、RTC、時間取得に依存しない。通信プロトコルの純粋ロジックもVueUseには依存させない。
 
 ## データフローと責任境界
 
@@ -160,19 +160,20 @@ type PlayCardResponse =
 
 ## フェーズ／受け入れテスト
 
-| 段階 | 実装範囲 | 最低限の合格条件 |
-|---|---|---|
-| 0 | Vue/Vite/TS/Pinia/Vuetify/router、Lint/Format/Unit/E2E/CI | npm ci、type-check、lint、format:check、test:unit、build、CI成功 |
-| 1 | カード・配札・自動補充・合法手・手詰まりREADY・勝敗 | 純粋関数の境界値、52枚一意性、不正操作、決定性をVitestで検証 |
-| 2 | ローカル対戦画面、スマホ表示、入力操作 | Playwrightでタップ・クリック・描画・画面方向・基本アクセシビリティを確認 |
-| 3 | 動作演出＋表示時刻計測 | fakeClock/FakeTransportで成功・失敗・遅延・タイムアウトを再現 |
-| 4 | `MessageTransport` + シグナリング + WebRTC | 2タブ/2端末で接続、拒否、終了、STUN/TURNの切替を確認 |
-| 5 | ホスト仲裁、時計差推定、競合窓、状態同期 | 同時操作（±0～100ms）、順序入替、重複、遅延、切断復帰のテスト |
-| 6 | 公開・実機テスト・運用 | GitHub Pages URL、iPhone/Android・Wi-Fi/セルラー混在で対戦成功 |
+| 段階 | 実装範囲                                                                          | 最低限の合格条件                                                           |
+| ---- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 0    | Vue/Vite/TS/Pinia/Vuetify/router、Lint/Format/Unit/E2E/CI                         | npm ci、type-check、lint、format:check、test:unit、build、test:e2e、CI成功 |
+| 0.5  | GitHub Pages公開、2台のスマホで手動Offer / Answer交換・DataChannel・RTT・擬似演出 | REQUEST / RESPONSEのRTT、操作感、LINE往復・コピー＆ペーストを実機検証      |
+| 1    | カード・配札・自動補充・合法手・手詰まりREADY・勝敗                               | 純粋関数の境界値、52枚一意性、不正操作、決定性をVitestで検証               |
+| 2    | ローカル対戦画面、スマホ表示、入力操作                                            | Playwrightでタップ・クリック・描画・画面方向・基本アクセシビリティを確認   |
+| 3    | 動作演出＋表示時刻計測                                                            | fakeClock/FakeTransportで成功・失敗・遅延・タイムアウトを再現              |
+| 4    | `MessageTransport` + シグナリング + WebRTC                                        | 2タブ/2端末で手動接続、拒否、終了、STUN/TURNの必要性を確認                 |
+| 5    | ホスト仲裁、時計差推定、競合窓、状態同期                                          | 同時操作（±0～100ms）、順序入替、重複、遅延、切断復帰のテスト              |
+| 6    | 公開・実機テスト・運用                                                            | GitHub Pages URL、iPhone/Android・Wi-Fi/セルラー混在で対戦成功             |
 
 - ブラウザE2Eは FakeTransport による再現可能なシナリオを主に検証。実RTCは別の統合テストに分離して不安定なネットワーク条件を前提とした曖昧なCI失敗を防ぐ。
 - GitHub Actions では `daily-heatmap` 同様、lintはチェックのみ・テスト・ビルドを実行する。E2Eモバイルはエミュレータであり実機保証ではない。
-- 公開はPR/m​​ain pushと切り離して明示の操作と承認で行う。Workers/DOの公開はPagesと独立して管理する。
+- 公開はPR/main pushと切り離して明示の操作と承認で行う。フェーズ0には公開用ワークフローを追加しない。
 
 ## Codex進行上の取り決め
 
@@ -180,10 +181,8 @@ type PlayCardResponse =
 2. 新規タスクは1 Issue / 1 PRに分ける。変更範囲と受け入れテストを先に書く。
 3. 変更後はtype-check / lint / format:check / unit / build / 該当E2Eを確認。パスしたテストと未実施テストを区別して報告。
 4. 外部サービスへのデプロイ、GitHubへのpush、PR作成、マージ等の外部書き込みは明示の承認がある場合だけ実施。
-5. README にフロント・シグナリングそれぞれの起動方法、デモモード、デプロイ手順を記載。
+5. READMEにフロントの起動方法と検証手順を記載。手動シグナリングの操作方法・デプロイ手順はフェーズ0.5で追加。
 
-## Codexへの初回依頼文（新規リポジトリ開始）
+## フェーズ0の実装方針
 
-以下をそのままCodexに渡せる。
-
-> 既存の `tatsuya0903/brain-training` と `tatsuya0903/daily-heatmap` の main ブランチを参照し、WebRTCを利用したトランプ「スピード」のオンライン2人対戦アプリを新規リポジトリに構築します。**既存2リポジトリの内容は変更しないでください。** 特に daily-heatmap の `src/domain/`・`src/stores/` の分割、Pinia/Vue Router、Vitest/Playwright、非破壊Lint、GitHub Actionsの品質ゲートを参考にし、brain-training の注入可能な Clock、DOM更新後の計測構造、サウンド/触覚フィードバックを参考にしてください。詳細は本書 `Speed_Existing_Projects_Architecture_Guide_v1.md` を基準にします。まずフェーズ0だけを実装し、必要なディレクトリ・起動できる最小画面・パッケージ構成・型チェック・テスト・CIを整備してください。通信・ゲーム本体・アニメーションはまだ実装せず、インターフェースの設計案と次のIssue分割だけを報告してください。`npm ci` / `npm run type-check` / `npm run lint` / `npm run format:check` / `npm run test:unit` / `npm run build` を実行して結果を明記してください。Push、PR、デプロイは承認なしに実施しないでください。
+Issue #1の範囲で、トップ・404画面、型チェック、チェック専用Lint・整形、Vitest、PC・スマホE2E、PR/mainのCIを実装する。VueUseのタイトル更新をテストする。Node/npmをVolta・engines・lockfile・CI間で揃える。通信・ゲーム・アニメーション・デプロイを先行実装しない。
