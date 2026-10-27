@@ -1,6 +1,6 @@
 # WebRTC スピード通信対戦アプリ — 既存プロジェクト参照アーキテクチャ v1.0
 
-作成日: 2026-10-25 / 更新日: 2026-10-27
+作成日: 2026-10-25 / 更新日: 2026-10-28
 
 > 最新決定: フロントエンドはGitHub Pages。フェーズ0.5以降はLINE／コピー＆ペーストによる手動Offer / Answer交換を正式版まで継続する。Cloudflare・独自バックエンド・DBは構築しない。通信・RTT・演出・デプロイはフェーズ0に含めない。
 
@@ -38,7 +38,7 @@
 - Vitest + Vue Test Utils + Playwright / ESLint + Oxlint + Prettier
 - フロントエンドの静的配信: GitHub Pages。`base` は新リポジトリの名前に合わせて設定。
 - シグナリング: Offer / AnswerをLINE／コピー＆ペーストで手動交換。自前の仲介サーバーは設けない。
-- WebRTCはブラウザー標準の `RTCDataChannel`（初期版は ordered/reliable）。STUN/TURNの必要性・利用方針はフェーズ0.5で検証し、独自バックエンドを前提としない。
+- WebRTCはブラウザー標準の `RTCDataChannel`（ordered/reliable）。公開STUNを利用し、TURNは導入しない。直接接続できないネットワークがある制約を表示する。
 - 初期版は認証・ランキング・ゲーム録画・PWAをスコープ外とする。PWA導入時は対戦中の自動更新を防止する。
 
 ## 推奨ディレクトリ構造
@@ -186,3 +186,15 @@ type PlayCardResponse =
 ## フェーズ0の実装方針
 
 Issue #1の範囲で、トップ・404画面、型チェック、チェック専用Lint・整形、Vitest、PC・スマホE2E、PR/mainのCIを実装する。VueUseのタイトル更新をテストする。Node/npmをVolta・engines・lockfile・CI間で揃える。通信・ゲーム・アニメーション・デプロイを先行実装しない。
+
+## フェーズ0.5で実装した境界
+
+現行実装の設計は [phase-0.5-validation.md](phase-0.5-validation.md) を参照する。上記のゲーム関連ディレクトリ・メッセージ・時間同期・演出の自動調整は将来案で、今回の実装ではない。
+
+- `network/protocol.ts` に接続情報・診断メッセージのバージョン付きJSONとランタイム検証。
+- `MessageTransport` の最小境界を `RtcTransport` と `FakeTransport` が実装する。
+- `DiagnosticSession` が双方向REQUEST / RESPONSE・actionId・タイムアウト・遅着応答・RTT・連続測定を担当する。
+- `useCardAnimation` は応答結果と端末内の演出時間を扱い、通信時間・正式なゲーム判定と分離する。前進100/200/300ms、成功確定60ms、拒否戻り120ms。低減モーションは0ms。
+- Offer / AnswerはICE収集完了後にのみコピー可能。20秒のICE期限と中止、90秒の接続期限、ページ破棄時の解放を持つ。正式版も手動交換を継続する。
+- VueUseはclipboard・visibility・reduced-motion等のUI補助。Piniaは既存アプリ登録を維持し、接続は画面内で管理する。
+- Pagesはworkflow_dispatchのみ。指定SHAに一致するmainのCI成功を検証し、公開権限はdeployジョブだけに付与する。現時点で公開は未実施。

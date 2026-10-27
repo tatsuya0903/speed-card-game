@@ -34,3 +34,269 @@ a:focus-visible {
   outline: 3px solid #17624d;
   outline-offset: 4px;
 }
+
+.hero {
+  margin-bottom: 1.8rem;
+}
+.hero h1 {
+  margin: 1rem 0 0.6rem;
+}
+.lead {
+  font-size: clamp(1.2rem, 4vw, 1.6rem);
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+h2 {
+  font-size: 1.25rem;
+  margin: 1.5rem 0 0.8rem;
+}
+h3 {
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+}
+p {
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.muted {
+  color: #536760;
+}
+.small {
+  font-size: 0.85rem;
+  margin: 0.7rem 0;
+}
+.notice {
+  padding: 0.9rem 1rem;
+  background: #fff5dc;
+  border-radius: 12px;
+  color: #5c4517;
+  margin: 1rem 0;
+}
+.connection-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+}
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background: #7a8580;
+  border-radius: 50%;
+}
+.status-dot.online {
+  background: #148360;
+}
+.actions {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.actions .v-btn {
+  min-height: 48px;
+}
+.signaling,
+.diagnostics {
+  margin-top: 1.5rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid #cbd9d0;
+}
+textarea,
+input,
+select {
+  border: 1px solid #8ba296;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.7rem;
+  font: inherit;
+  font-size: 16px;
+  color: #182f27;
+  max-width: 100%;
+  min-height: 48px;
+}
+textarea {
+  width: 100%;
+  display: block;
+  margin: 0.5rem 0 1rem;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+textarea[readonly] {
+  background: #f1f7f3;
+}
+.signal-label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+.fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.fields input,
+.fields select {
+  width: 100%;
+}
+.receive-indicator {
+  border-radius: 10px;
+  background: #edf5f0;
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+}
+.receive-indicator.flash {
+  background: #b4ebcf;
+  outline: 2px solid #17624d;
+}
+.stat-series {
+  display: grid;
+  gap: 0.8rem;
+}
+.metric-block {
+  padding: 1rem;
+  border: 1px solid #cbd9d0;
+  border-radius: 12px;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 1rem;
+}
+.metrics dt {
+  font-size: 0.8rem;
+  color: #536760;
+}
+.metrics dd {
+  margin: 0.2rem 0;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.counters {
+  font-size: 0.85rem;
+  margin-top: 0.8rem;
+}
+hr {
+  border: 0;
+  border-top: 1px solid #cbd9d0;
+  margin: 1.5rem 0;
+}
+.error-message {
+  background: #ffebeb;
+  border-left: 4px solid #a51d26;
+  padding: 0.8rem;
+  margin: 1rem 0;
+  color: #8a1420;
+}
+.demo-details {
+  margin-top: 1rem;
+}
+summary {
+  cursor: pointer;
+  padding: 0.8rem 0;
+}
+.card-board {
+  height: 310px;
+  position: relative;
+  background: #e7f1eb;
+  border-radius: 18px;
+  margin-top: 1rem;
+  overflow: hidden;
+}
+.pile,
+.pseudo-card {
+  position: absolute;
+  width: 86px;
+  height: 116px;
+  left: calc(50% - 43px);
+  border-radius: 10px;
+}
+.pile {
+  top: 20px;
+  border: 2px dashed #668c79;
+  display: grid;
+  place-items: center;
+  color: #466453;
+}
+.pseudo-card {
+  top: 174px;
+  background: #fffdf5;
+  border: 2px solid #17624d;
+  box-shadow: 0 4px 8px #173c2720;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.pseudo-card span:first-child {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #17624d;
+}
+.pseudo-card span:last-child {
+  font-size: 0.65rem;
+}
+.pseudo-card.moving {
+  animation: card-forward var(--move-ms) linear forwards;
+}
+.pseudo-card.waiting,
+.pseudo-card.unknown {
+  transform: translateY(-130px);
+}
+.pseudo-card.unknown {
+  border-color: #9a650b;
+}
+.pseudo-card.committing,
+.pseudo-card.accepted {
+  transform: translateY(-154px);
+  transition: transform var(--settle-ms) ease-out;
+}
+.pseudo-card.returning,
+.pseudo-card.rejected {
+  transform: translateY(0);
+  transition: transform var(--settle-ms) ease-out;
+}
+.hand-label {
+  position: absolute;
+  bottom: 10px;
+  left: 16px;
+  font-size: 0.8rem;
+  color: #536760;
+}
+:where(button, textarea, input, select, summary):focus-visible {
+  outline: 3px solid #17624d;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pseudo-card {
+    transition: none !important;
+  }
+}
+@media (max-width: 400px) {
+  .actions .v-btn {
+    flex: 1 1 auto;
+  }
+}
+
+@keyframes card-forward {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-130px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pseudo-card.moving {
+    animation: none;
+    transform: translateY(-130px);
+  }
+}
