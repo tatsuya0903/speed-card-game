@@ -2,9 +2,9 @@
 
 **WebRTCを利用して、トランプゲーム「スピード」をオンラインでリアルタイム対戦できるWebアプリケーションです。**
 
-> **開発状況：フェーズ0の開発基盤を実装済み**
+> **開発状況：フェーズ0.5の通信・操作感検証をローカル実装済み**
 >
-> トップ画面・404画面・品質管理を整備しています。対戦・通信機能は未実装、アプリは未公開です。
+> 手動WebRTC接続、RTT診断、擬似カード演出を実装しています。ゲーム本体は未実装です。本作業では公開・実機検証を行っていません。
 
 ## 概要
 
@@ -54,19 +54,19 @@ Speed Card Gameは、2人のプレイヤーがブラウザーから参加し、�
 
 ## 技術構成
 
-| 分類                            | 技術                                                 |
-| ------------------------------- | ---------------------------------------------------- |
-| フロントエンド                  | Vue 3 / TypeScript strict / Vite 8                   |
-| UI・状態管理                    | Vuetify 4 / Pinia 4 / Vue Router（Hash History）     |
-| UI補助                          | VueUse（@vueuse/core）                               |
-| 実行環境                        | Volta / Node.js 24.21.0 / npm 11.19.0                |
-| P2P通信（フェーズ0.5以降）      | ブラウザー標準のWebRTC DataChannel                   |
-| シグナリング（フェーズ0.5以降） | LINE／コピー＆ペーストによる手動交換（正式版も継続） |
-| 接続補助（今後検証）            | STUN / TURNの必要性・利用方針をフェーズ0.5で評価     |
-| 単体・結合テスト                | Vitest / Vue Test Utils                              |
-| E2Eテスト                       | Playwright                                           |
-| 品質管理                        | ESLint / Oxlint / Prettier / GitHub Actions          |
-| フロントエンド公開              | GitHub Pages（予定）                                 |
+| 分類                            | 技術                                                         |
+| ------------------------------- | ------------------------------------------------------------ |
+| フロントエンド                  | Vue 3 / TypeScript strict / Vite 8                           |
+| UI・状態管理                    | Vuetify 4 / Pinia 4 / Vue Router（Hash History）             |
+| UI補助                          | VueUse（@vueuse/core）                                       |
+| 実行環境                        | Volta / Node.js 24.21.0 / npm 11.19.0                        |
+| P2P通信（フェーズ0.5以降）      | ブラウザー標準のWebRTC DataChannel                           |
+| シグナリング（フェーズ0.5以降） | LINE／コピー＆ペーストによる手動交換（正式版も継続）         |
+| 接続補助                        | 公開STUNを使用、TURNは導入しない（直接接続できない環境あり） |
+| 単体・結合テスト                | Vitest / Vue Test Utils                                      |
+| E2Eテスト                       | Playwright                                                   |
+| 品質管理                        | ESLint / Oxlint / Prettier / GitHub Actions                  |
+| フロントエンド公開              | GitHub Pages（予定）                                         |
 
 ## セットアップ
 
@@ -105,21 +105,43 @@ Chromium / Firefox / WebKit / Pixel 7 / iPhone 13の5プロジェクトで実行
 
 ```text
 src/
-├── composables/       # VueUseを使うページタイトル更新とテスト
+├── network/           # MessageTransport、WebRTC、手動接続JSON、FakeTransport
+├── diagnostics/       # REQUEST / RESPONSE対応付け、RTT統計、連続測定
+├── components/        # DiagnosticPanel
+├── composables/       # ページタイトル、通信と独立したカード演出
 ├── plugins/           # Vuetify設定ファクトリ
 ├── router/            # Hash Router、トップ・404ルート
-├── views/             # HomeView / NotFoundView
+├── views/             # 接続・診断画面 / NotFoundView
 ├── __tests__/         # アプリ結合テスト、テスト環境
 ├── App.vue            # 共通レイアウトとルーティング
 ├── main.ts            # Vue / Pinia / Router / Vuetifyの組み立て
 └── styles.css
-e2e/                  # PC・スマホの基本テスト
-.github/workflows/     # PRとmain更新時のCI（デプロイなし）
+e2e/                  # PC・スマホのUIテスト。rtc/は実WebRTC統合テスト
+.github/workflows/     # CIと手動Pages公開を分離
 ```
 
-将来の `domain/`（純粋なゲームロジック）、`network/`（WebRTC・手動接続）、`stores/`（Piniaの表示向け状態）、`application/`（対戦進行）、`components/`（共通UI）は、実際に使う段階で追加します。空ディレクトリ・ダミーStoreは作りません。Pinia自体はアプリに登録済みです。
+将来のゲームエンジン・仲裁器・時計同期器はまだ作成しません。Piniaのアプリ登録は維持し、診断接続は画面のライフサイクル内で管理します。
 
-VueUseは `usePageTitle` 内の `useTitle` で使用し、画面遷移に追従するタイトルをテストします。今後の `useClipboard` / `useDocumentVisibility` もUI補助として用い、ゲームドメイン・通信プロトコルの純粋ロジックには依存させません。
+VueUseの `useTitle` / `useClipboard` / `useDocumentVisibility` はUIに限定し、通信プロトコル・RTT計算はVueに依存しません。
+
+## フェーズ0.5の使い方
+
+1. ホストは「接続を開始」→ ICE収集完了後「Offerをコピー」→ LINE等で相手へ送信。
+2. ゲストは「接続に参加」→ Offer全文を貼る →「Answerを生成」→「Answerをコピー」で返信。
+3. ホストがAnswer全文を貼り「Answerを適用して接続」。双方の診断画面で計測できます。
+4. 1回計測・50/100回の連続測定（間隔20〜10000ms）・カード送信を試します。
+5. 失敗・再読み込み時は双方で終了し、新しいOffer / Answerを交換します。接続は保存しません。
+
+1台で演出を確認する場合は「1台で演出を試す」→「ローカル模擬を開始」。FakeTransportの値はネットワークRTTではありません。通常RTTと人工応答遅延を含む往復時間は別系列です。タイムアウトは結果不明で、提出失敗を確定しません。
+
+詳細な設計・集計仕様・全変更ファイル・実機検証表・公開手順は [フェーズ0.5検証記録](docs/phase-0.5-validation.md) を参照してください。
+
+```sh
+npm run test       # 単体テスト + 安定したPC/スマホUI E2E
+npm run test:rtc   # 実WebRTC：独立した2つのChromiumプロセス
+```
+
+実RTCは通常CIのE2Eから分離しています。公開STUNを使用し、TURNは導入しません。直接接続できないネットワークでは別回線で再生成してください。iPhone Safari / Chrome・Android Chromeの実機結果は未記録です。
 
 ## GitHub PagesとCI
 
@@ -133,7 +155,7 @@ npm run preview
 `http://localhost:4173/speed-card-game/` で本番成果物を確認できます。
 PRとmain更新時のCIは型チェック・Oxlint・ESLint・整形・Vitest・ビルド・Playwrightを実行します。CIのNode.jsは `package.json` のVolta設定から取得し、npmも同じ固定バージョンを使用します。`.npmrc` の `engine-strict` により、異なる実行環境ではインストールを失敗させます。
 
-今回はGitHub Pages向けビルド設定までです。デプロイ設定・公開作業はフェーズ0.5で行います。Cloudflareや独自バックエンドは構築しません。
+Pagesの手動公開ワークフローを追加しました。公開は別途承認後に行います。Cloudflareや独自バックエンドは構築しません。
 
 ## 開発計画
 

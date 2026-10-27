@@ -16,7 +16,9 @@
     "format:check": "prettier --check .",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:rtc": "playwright test --config playwright.rtc.config.ts"
   },
   "dependencies": {
     "@vue/devtools-api": "8.1.5",
