@@ -107,7 +107,7 @@ E2EはChromium / Firefox / WebKit / Pixel 7 / iPhone 13で各3件。本番アセ
 
 ## 残件とフェーズ0.5への引き継ぎ
 
-初回実装時はローカルの実装・必須コマンドまで完了し、push・PR作成が未承認のためリモートCIは実行していなかった。今回はコミット・作業ブランチへのpush・Issue #1のPR作成・同PRのCI修正が明示承認された。GitHub上でのCI結果はPR作成後に確認する。
+初回実装時はローカルの実装・必須コマンドまで完了し、push・PR作成が未承認のためリモートCIは実行していなかった。今回はコミット・作業ブランチへのpush・Issue #1のPR作成・同PRのCI修正が明示承認され、実行を完了した。GitHub Actionsでも品質検証・E2Eの両ジョブが成功し、Issue #1の実装・検証要件を満たした。
 
 マージ、Issue #1のクローズ、タグ作成、デプロイは今回も実施しない。
 
@@ -119,5 +119,18 @@ E2EはChromium / Firefox / WebKit / Pixel 7 / iPhone 13で各3件。本番アセ
 - README末尾の古い「開発開始時点の計画」を現状に合わせ、アーキテクチャのフェーズ0受け入れ条件に `test:e2e` を明記した。GitHub Pages、正式版まで継続する手動シグナリング、独自バックエンドなしの方針を維持している。
 - `npm ci` / `npm run type-check` / `npm run lint` / `npm run format:check` / `npm run test:unit` / `npm run build` を再実行して成功。単体・コンポーネントテストは2ファイル・3件、インストール時の脆弱性報告は0件。
 - `npm run test:e2e` も再実行して成功。Chromium / Firefox / WebKit / Pixel 7 / iPhone 13の全15件がリトライなしで成功した。
+
+## GitHub Actionsでの検証
+
+- PR: [#2 chore: フェーズ0の開発基盤を構築](https://github.com/tatsuya0903/speed-card-game/pull/2)
+- 実装コミット: `a5c98de011a8b58e785727b16529ff164883376c`（`chore: フェーズ0の開発基盤とCIを構築`）。
+- 検証実行: [CI #1 / Run 40515433711](https://github.com/tatsuya0903/speed-card-game/actions/runs/40515433711)、`pull_request`イベント、Ubuntu 24.04、結果 `success`。
+- 品質ジョブ: `npm ci`、型チェック、Oxlint・ESLint、Prettier、単体テスト、本番ビルドがすべて成功。
+- E2Eジョブ: ブラウザー・OS依存ライブラリのインストールと、本番ビルドを用いたPlaywrightの全5プロジェクトが成功。`--fail-on-flaky-tests` を有効にして実行した。
+- CIの不具合修正は不要だった。本記録を追加するコミットは文書のみの変更で、最新コミットの実行状態はPRのChecksから確認できる。
+
+HTTPS経由の初回pushは既存OAuth認証の `workflow` scope不足で拒否された。既存SSH認証で同じ本人アカウントを確認して作業ブランチのみをpushした。接続済みGitHubプラグインはPR作成権限がなかったため、既存GitHub CLI認証でPRを作成した。認証権限やoriginのURLは変更していない。
+
+## フェーズ0.5への引き継ぎ
 
 フェーズ0.5では、承認後のGitHub Pages公開、2台のスマートフォンでのLINE／コピー＆ペーストによる手動接続、REQUEST / RESPONSEのRTT、擬似カードアニメーションと操作感を検証する。`useClipboard` / `useDocumentVisibility` はその時点で必要な箇所へ追加する。STUN/TURNの必要性と接続できない環境の扱いも実機で評価する。詳細は [implementation-plan.md](implementation-plan.md) を参照。
